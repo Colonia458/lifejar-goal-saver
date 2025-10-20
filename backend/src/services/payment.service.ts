@@ -43,11 +43,58 @@ export class PaymentService {
           message: response?.message || 'Failed to initiate STK Push payment'
         };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('PayHero STK Push initiation error:', error);
+      
+      // Handle specific PayHero errors
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        console.error('PayHero error details:', {
+          error_code: errorData.error_code,
+          error_message: errorData.error_message,
+          status_code: errorData.status_code
+        });
+
+        // Provide user-friendly error messages based on PayHero error codes
+        if (errorData.error_code === 'PERMISSION_DENIED' && errorData.error_message?.includes('inactive payment channel')) {
+          return {
+            success: false,
+            message: 'Payment service is temporarily unavailable. Please contact support or try Pesapal payment instead.',
+            error_details: {
+              code: errorData.error_code,
+              message: 'Payment channel is inactive - requires PayHero account activation'
+            }
+          };
+        }
+        
+        if (errorData.error_code === 'INVALID_PHONE_NUMBER') {
+          return {
+            success: false,
+            message: 'Invalid phone number format. Please use the format: 07XXXXXXXX',
+            error_details: {
+              code: errorData.error_code,
+              message: errorData.error_message
+            }
+          };
+        }
+
+        // Generic PayHero error handling
+        return {
+          success: false,
+          message: `Payment failed: ${errorData.error_message || 'Unknown error'}`,
+          error_details: {
+            code: errorData.error_code,
+            message: errorData.error_message
+          }
+        };
+      }
+      
       return {
         success: false,
-        message: 'Failed to initiate STK Push payment. Please try again.'
+        message: 'Payment service is temporarily unavailable. Please try again later or use Pesapal payment.',
+        error_details: {
+          message: error.message || 'Unknown error occurred'
+        }
       };
     }
   }

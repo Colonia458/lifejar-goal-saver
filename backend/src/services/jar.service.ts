@@ -7,28 +7,51 @@ export class JarService {
    * Create a new jar for a user
    */
   static async createJar(userId: string, jarData: CreateJarRequest): Promise<Jar> {
+    console.log('JarService.createJar - userId:', userId);
+    console.log('JarService.createJar - jarData:', JSON.stringify(jarData, null, 2));
+    
+    // Normalize currency - handle common variations
+    let currency = jarData.currency || 'KSH';
+    if (currency === 'KES') {
+      currency = 'KSH'; // KES is the same as KSH for Kenyan Shilling
+    }
+    
+    console.log('JarService.createJar - currency normalized:', currency);
+    
+    const insertData = {
+      user_id: userId,
+      title: jarData.title,
+      description: jarData.description || null,
+      target_amount: jarData.target_amount,
+      current_amount: 0,
+      currency: currency,
+      is_public: jarData.is_public || false,
+      is_active: true,
+      deadline: jarData.deadline || null,
+      category: jarData.category || null,
+      image_url: jarData.image_url || null
+    };
+
+    console.log('JarService.createJar - insertData:', JSON.stringify(insertData, null, 2));
+
     const { data, error } = await supabase
       .from('jars')
-      .insert({
-        user_id: userId,
-        title: jarData.title,
-        description: jarData.description || null,
-        target_amount: jarData.target_amount,
-        current_amount: 0,
-        currency: jarData.currency || 'USD',
-        is_public: jarData.is_public || false,
-        is_active: true,
-        deadline: jarData.deadline || null,
-        category: jarData.category || null,
-        image_url: jarData.image_url || null
-      })
+      .insert(insertData)
       .select()
       .single();
 
     if (error) {
-      throw new Error(`Failed to create jar: ${error.message}`);
+      console.error('JarService.createJar - Supabase error:', {
+        error,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+      throw new Error(`Failed to create jar: ${error.message} (Code: ${error.code})`);
     }
 
+    console.log('JarService.createJar - success, created jar:', data?.id);
     return data as Jar;
   }
 

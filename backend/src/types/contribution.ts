@@ -34,6 +34,10 @@ export interface PayHeroPaymentResponse {
   payment_url?: string;
   transaction_id?: string;
   message?: string;
+  error_details?: {
+    code?: string;
+    message?: string;
+  };
 }
 
 export interface PayHeroWebhookPayload {

@@ -1,7 +1,7 @@
 // Import PayHero wrapper correctly
 const PayHeroWrapper = require('payhero-wrapper');
 const PayHero = PayHeroWrapper.default;
-
+require('dotenv').config();
 const payheroAuthToken = process.env['PAYHERO_AUTH_TOKEN'];
 const pesapalConsumerKey = process.env['PESAPAL_CONSUMER_KEY'];
 const pesapalConsumerSecret = process.env['PESAPAL_CONSUMER_SECRET'];

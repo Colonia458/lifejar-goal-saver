@@ -1,4 +1,5 @@
--- LifeJar Database Schema
+-- LifeJar Database Schema (Comprehensive)
+-- Merged from schema.sql and schema_update.sql
 -- Run this SQL in your Supabase SQL editor
 
 -- Enable UUID extension
@@ -9,21 +10,32 @@ CREATE TABLE jars (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
+  description TEXT,
   target_amount INTEGER NOT NULL CHECK (target_amount > 0),
   current_amount INTEGER DEFAULT 0 CHECK (current_amount >= 0),
+  currency TEXT DEFAULT 'KSH' CHECK (currency IN ('KSH', 'KES', 'USD', 'EUR', 'GBP')),
+  is_public BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
   deadline TIMESTAMP WITH TIME ZONE,
+  category TEXT,
   image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create contributions table
+-- Create contributions table (with updates)
 CREATE TABLE contributions (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   jar_id UUID REFERENCES jars(id) ON DELETE CASCADE,
-  contributor_name TEXT NOT NULL,
+  contributor_name TEXT, -- Made nullable for anonymous contributions
+  contributor_email TEXT,
   amount INTEGER NOT NULL CHECK (amount > 0),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  currency TEXT DEFAULT 'KSH',
+  payment_status TEXT DEFAULT 'pending',
+  message TEXT,
+  is_anonymous BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create payments table (for tracking payment transactions)
@@ -41,7 +53,7 @@ CREATE TABLE payments (
 CREATE OR REPLACE FUNCTION increment_jar_amount(jar_id UUID, amount INTEGER)
 RETURNS VOID AS $$
 BEGIN
-  UPDATE jars 
+  UPDATE jars
   SET current_amount = current_amount + amount,
       updated_at = NOW()
   WHERE id = jar_id;
@@ -57,11 +69,26 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Create trigger to automatically update updated_at
+-- Create function to update contribution updated_at timestamp
+CREATE OR REPLACE FUNCTION update_contribution_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to automatically update updated_at for jars
 CREATE TRIGGER trigger_update_jar_updated_at
   BEFORE UPDATE ON jars
   FOR EACH ROW
   EXECUTE FUNCTION update_jar_updated_at();
+
+-- Create trigger to automatically update updated_at for contributions
+CREATE TRIGGER trigger_update_contribution_updated_at
+  BEFORE UPDATE ON contributions
+  FOR EACH ROW
+  EXECUTE FUNCTION update_contribution_updated_at();
 
 -- Create indexes for better performance
 CREATE INDEX idx_jars_user_id ON jars(user_id);
@@ -108,4 +135,3 @@ CREATE POLICY "Anyone can insert payments" ON payments
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
-

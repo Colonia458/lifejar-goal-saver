@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { JarService } from '../services/jar.service';
 import { CreateJarRequest, UpdateJarRequest } from '../types/jar';
-import { success, serverError, notFound, badRequest } from '../utils/response';
+import { success, serverError, notFound, badRequest, unauthorized } from '../utils/response';
 import { AuthenticatedRequest } from '../middleware/auth';
 
 export class JarController {
@@ -10,24 +10,49 @@ export class JarController {
    */
   static async createJar(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = req.user!.id;
+      console.log('=== CREATE JAR REQUEST START ===');
+      console.log('Request headers:', JSON.stringify(req.headers, null, 2));
+      console.log('Request user:', req.user);
+      
+      const userId = req.user?.id;
+      if (!userId) {
+        console.error('No user ID found in request');
+        unauthorized(res, 'User not authenticated');
+        return;
+      }
+
       const jarData: CreateJarRequest = req.body;
+      console.log('Creating jar for user:', userId);
+      console.log('Jar data:', JSON.stringify(jarData, null, 2));
 
       // Validate required fields
       if (!jarData.title || !jarData.target_amount) {
+        console.log('Validation failed: missing title or target_amount');
         badRequest(res, 'Title and target amount are required');
         return;
       }
 
       if (jarData.target_amount <= 0) {
+        console.log('Validation failed: target_amount <= 0');
         badRequest(res, 'Target amount must be greater than 0');
         return;
       }
 
+      console.log('Attempting to create jar via JarService...');
       const jar = await JarService.createJar(userId, jarData);
+      console.log('Jar created successfully:', jar.id);
       success(res, jar, 'Jar created successfully', 201);
     } catch (err) {
-      console.error('Create jar error:', err);
+      console.error('=== CREATE JAR ERROR ===');
+      console.error('Error details:', {
+        error: err,
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : undefined,
+        userId: req.user?.id,
+        jarData: req.body,
+        timestamp: new Date().toISOString()
+      });
+      console.error('=== CREATE JAR ERROR END ===');
       serverError(res, 'Failed to create jar');
     }
   }

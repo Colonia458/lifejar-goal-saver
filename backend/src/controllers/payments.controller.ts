@@ -30,6 +30,13 @@ export class PaymentController {
           transaction_id: result.transaction_id
         }, result.message);
       } else {
+        // Include error details for better debugging and user feedback
+        const errorResponse = {
+          message: result.message || 'Failed to initiate STK Push payment',
+          error_details: result.error_details
+        };
+        
+        console.error('STK Push failed:', errorResponse);
         error(res, result.message || 'Failed to initiate STK Push payment', 400);
       }
     } catch (err) {
