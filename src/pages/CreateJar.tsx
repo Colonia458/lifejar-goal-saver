@@ -3,41 +3,73 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import Header from "@/components/Header";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
+import { jarsApi } from "@/lib/api";
 
 const CreateJar = () => {
   const navigate = useNavigate();
-  const [title, setTitle] = useState("");
-  const [targetAmount, setTargetAmount] = useState("");
-  const [deadline, setDeadline] = useState("");
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    targetAmount: "",
+    currency: "KES",
+    isPublic: true,
+    deadline: "",
+    category: "",
+    imagePreview: null as string | null,
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        setFormData(prev => ({ ...prev, imagePreview: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!title || !targetAmount) {
+
+    if (!formData.title || !formData.targetAmount) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    // Placeholder for API call
-    console.log("Creating jar:", { title, targetAmount, deadline, imagePreview });
-    
-    toast.success("Jar created successfully!");
-    navigate("/dashboard");
+    setIsLoading(true);
+    try {
+      const jarData = {
+        title: formData.title,
+        description: formData.description || undefined,
+        target_amount: parseFloat(formData.targetAmount),
+        currency: formData.currency,
+        is_public: formData.isPublic,
+        deadline: formData.deadline || undefined,
+        category: formData.category || undefined,
+        image_url: formData.imagePreview || undefined,
+      };
+
+      await jarsApi.createJar(jarData);
+      toast.success("Jar created successfully!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Create jar error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create jar");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -64,9 +96,9 @@ const CreateJar = () => {
                   className="hidden"
                 />
                 <label htmlFor="image" className="cursor-pointer">
-                  {imagePreview ? (
+                  {formData.imagePreview ? (
                     <img
-                      src={imagePreview}
+                      src={formData.imagePreview}
                       alt="Preview"
                       className="max-h-48 mx-auto rounded-lg"
                     />
