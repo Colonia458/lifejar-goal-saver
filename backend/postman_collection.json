@@ -62,36 +62,111 @@
       ]
     },
     {
-      "name": "Authentication Setup",
+      "name": "Authentication",
       "item": [
         {
-          "name": "Authentication Note",
+          "name": "Signup",
           "request": {
-            "method": "GET",
-            "header": [],
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\"\n}"
+            },
             "url": {
-              "raw": "{{base_url}}/health",
+              "raw": "{{base_url}}/api/auth/signup",
               "host": ["{{base_url}}"],
-              "path": ["health"]
+              "path": ["api", "auth", "signup"]
             }
           },
           "event": [
             {
-              "listen": "prerequest",
+              "listen": "test",
               "script": {
                 "exec": [
-                  "// NOTE: Authentication is handled by Supabase",
-                  "// 1. Sign up/login through your frontend or Supabase dashboard",
-                  "// 2. Get the JWT access token from Supabase",
-                  "// 3. Set the 'auth_token' variable in Postman environment to the JWT token",
-                  "// 4. Use 'Bearer {{auth_token}}' in Authorization header for protected endpoints",
-                  "",
-                  "// Example token format:",
-                  "// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', response.data.access_token);",
+                  "    console.log('Token set from signup:', response.data.access_token.substring(0, 20) + '...');",
+                  "}"
                 ]
               }
             }
           ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', response.data.access_token);",
+                  "    console.log('Token set from login:', response.data.access_token.substring(0, 20) + '...');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
         }
       ]
     },

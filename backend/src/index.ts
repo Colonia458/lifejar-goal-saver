@@ -9,18 +9,19 @@ import { success, error } from './utils/response';
 dotenv.config();
 
 // Import routes
+import authRoutes from './routes/auth.routes';
 import jarsRoutes from './routes/jars.routes';
 import paymentsRoutes from './routes/payments.routes';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env['PORT'] || 3000;
 
 // Security middleware
 app.use(helmet());
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env['FRONTEND_URL'] || 'http://localhost:5173',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -39,11 +40,12 @@ app.get('/health', (req, res) => {
     service: 'lifejar-backend',
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '1.0.0'
+    version: process.env['npm_package_version'] || '1.0.0'
   }, 'Service is healthy');
 });
 
 // API routes
+app.use('/api/auth', authRoutes);
 app.use('/api/jars', jarsRoutes);
 app.use('/api/payments', paymentsRoutes);
 
@@ -54,6 +56,7 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     endpoints: {
       health: '/health',
+      auth: '/api/auth',
       jars: '/api/jars',
       payments: '/api/payments'
     }
@@ -70,7 +73,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   console.error('Global error handler:', err);
   
   // Don't leak error details in production
-  const message = process.env.NODE_ENV === 'production' 
+  const message = process.env['NODE_ENV'] === 'production' 
     ? 'Internal server error' 
     : err.message || 'Internal server error';
     
@@ -80,7 +83,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 LifeJar Backend API running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📊 Environment: ${process.env['NODE_ENV'] || 'development'}`);
   console.log(`🔗 Health check: http://localhost:${PORT}/health`);
   console.log(`📚 API docs: http://localhost:${PORT}/`);
 });
