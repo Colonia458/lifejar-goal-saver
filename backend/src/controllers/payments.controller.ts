@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { PaymentService } from '../services/payment.service';
-import { PaymentInitiationRequest, PayHeroWebhookPayload } from '../types/contribution';
+import { PayHeroWebhookPayload } from '../types/contribution';
 import { success, error, serverError, badRequest } from '../utils/response';
 
 export class PaymentController {
@@ -125,7 +125,7 @@ export class PaymentController {
   /**
    * Health check for payment service
    */
-  static async healthCheck(req: Request, res: Response): Promise<void> {
+  static async healthCheck(_req: Request, res: Response): Promise<void> {
     try {
       // Simple health check - in production you might want to ping PayHero API
       success(res, { 

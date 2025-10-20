@@ -121,8 +121,8 @@ const CreateJar = () => {
                 id="title"
                 type="text"
                 placeholder="e.g., Emergency Fund, New Laptop"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={formData.title}
+                onChange={(e) => handleInputChange('title', e.target.value)}
                 className="text-base"
                 required
               />
@@ -137,8 +137,8 @@ const CreateJar = () => {
                 id="target"
                 type="number"
                 placeholder="e.g., 50000"
-                value={targetAmount}
-                onChange={(e) => setTargetAmount(e.target.value)}
+                value={formData.targetAmount}
+                onChange={(e) => handleInputChange('targetAmount', e.target.value)}
                 className="text-base"
                 required
                 min="1"
@@ -153,8 +153,8 @@ const CreateJar = () => {
               <Input
                 id="deadline"
                 type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
+                value={formData.deadline}
+                onChange={(e) => handleInputChange('deadline', e.target.value)}
                 className="text-base"
               />
             </div>

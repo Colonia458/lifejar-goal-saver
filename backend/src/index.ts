@@ -21,7 +21,7 @@ app.use(helmet());
 
 // CORS configuration
 app.use(cors({
-  origin: process.env['FRONTEND_URL'] || 'http://localhost:5173',
+  origin: process.env['FRONTEND_URL'] || 'http://localhost:8080',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -35,7 +35,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   success(res, {
     service: 'lifejar-backend',
     status: 'healthy',
@@ -50,7 +50,7 @@ app.use('/api/jars', jarsRoutes);
 app.use('/api/payments', paymentsRoutes);
 
 // Root endpoint
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   success(res, {
     service: 'LifeJar Backend API',
     version: '1.0.0',
@@ -69,7 +69,7 @@ app.use('*', (req, res) => {
 });
 
 // Global error handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Global error handler:', err);
   
   // Don't leak error details in production

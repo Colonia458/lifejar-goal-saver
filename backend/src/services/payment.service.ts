@@ -25,7 +25,7 @@ export class PaymentService {
         channel_id: 333, // You may need to adjust this based on your PayHero setup
         provider: 'm-pesa',
         external_reference: `jar_${paymentData.jar_id}_${Date.now()}`,
-        callback_url: `${process.env.API_BASE_URL}/api/payments/webhook`
+        callback_url: `${process.env['API_BASE_URL']}/api/payments/webhook`
       };
 
       // Make STK Push request using PayHero wrapper
@@ -124,7 +124,7 @@ export class PaymentService {
     try {
       // In a real implementation, you would verify the signature using PayHero's webhook secret
       // For now, we'll implement a basic verification
-      const webhookSecret = process.env.PAYHERO_WEBHOOK_SECRET;
+      const webhookSecret = process.env['PAYHERO_WEBHOOK_SECRET'];
       
       if (!webhookSecret) {
         console.warn('PayHero webhook secret not configured');
@@ -157,7 +157,7 @@ export class PaymentService {
       const reference = webhookData.reference;
       const jarIdMatch = reference.match(/jar_([^_]+)_/);
       
-      if (!jarIdMatch) {
+      if (!jarIdMatch || !jarIdMatch[1]) {
         console.error('Invalid reference format in webhook');
         return false;
       }

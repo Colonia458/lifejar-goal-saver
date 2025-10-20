@@ -41,3 +41,16 @@ export interface JarWithContributions extends Jar {
   contributions: Contribution[];
 }
 
+export interface Contribution {
+  id: string;
+  jar_id: string;
+  contributor_name?: string;
+  contributor_email?: string;
+  amount: number;
+  currency: string;
+  payment_status: string;
+  message?: string;
+  is_anonymous: boolean;
+  created_at: string;
+}
+

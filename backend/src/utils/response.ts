@@ -2,25 +2,25 @@ import { Response } from 'express';
 
 export interface ApiResponse<T = any> {
   success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
+  data?: T | undefined;
+  message?: string | undefined;
+  error?: string | undefined;
 }
 
-export const success = <T>(res: Response, data: T, message?: string, statusCode: number = 200): void => {
+export const success = <T>(res: Response, data: T, message: string = '', statusCode: number = 200): void => {
   const response: ApiResponse<T> = {
     success: true,
     data,
-    message
+    message: message || 'Success'
   };
   res.status(statusCode).json(response);
 };
 
-export const error = (res: Response, message: string, statusCode: number = 400, error?: string): void => {
+export const error = (res: Response, message: string, statusCode: number = 400, errorCode: string = ''): void => {
   const response: ApiResponse = {
     success: false,
     message,
-    error
+    error: errorCode as string | undefined
   };
   res.status(statusCode).json(response);
 };

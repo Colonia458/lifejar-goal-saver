@@ -32,10 +32,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedToken = localStorage.getItem('auth_token');
     if (storedToken) {
       setToken(storedToken);
-      // TODO: Validate token with backend and get user profile
+      // Validate token and get user profile
+      validateToken(storedToken);
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
+
+  const validateToken = async (token: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setUser(data.data.user || data.data);
+        }
+      } else {
+        // Token is invalid, clear it
+        localStorage.removeItem('auth_token');
+        setToken(null);
+      }
+    } catch (error) {
+      console.error('Token validation error:', error);
+      // On error, clear token to be safe
+      localStorage.removeItem('auth_token');
+      setToken(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);

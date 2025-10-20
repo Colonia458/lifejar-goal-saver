@@ -1,26 +1,87 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import Header from "@/components/Header";
 import ProgressBar from "@/components/ProgressBar";
-import { getJarById } from "@/lib/mockData";
+import { jarsApi, paymentsApi } from "@/lib/api";
 import { Copy, DollarSign, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
+interface Jar {
+  id: string;
+  title: string;
+  description?: string;
+  target_amount: number;
+  current_amount: number;
+  currency: string;
+  deadline?: string;
+  image_url?: string;
+}
+
+interface Contribution {
+  id: string;
+  contributor_name: string;
+  amount: number;
+  created_at: string;
+}
+
+interface JarDetail extends Jar {
+  contributions: Contribution[];
+}
+
 const JarDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const jar = getJarById(id || "");
+  const [jar, setJar] = useState<JarDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState("");
   const [isDepositOpen, setIsDepositOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  if (!jar) {
+  useEffect(() => {
+    const fetchJar = async () => {
+      if (!id) return;
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await jarsApi.getJarById(id);
+        if (response.success && response.data) {
+          setJar(response.data);
+        } else {
+          setError("Failed to load jar");
+        }
+      } catch (err) {
+        console.error("Error fetching jar:", err);
+        setError(err instanceof Error ? err.message : "Failed to load jar");
+        toast.error("Failed to load jar details");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJar();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8 text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading jar details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!jar || error) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto px-4 py-8">
-          <p className="text-center text-muted-foreground">Jar not found</p>
+          <p className="text-center text-muted-foreground">{error || "Jar not found"}</p>
         </div>
       </div>
     );
@@ -33,18 +94,35 @@ const JarDetail = () => {
     toast.success("Link copied to clipboard!");
   };
 
-  const handleDeposit = () => {
+  const handleDeposit = async () => {
     if (!depositAmount || Number(depositAmount) <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
 
-    // Placeholder for API call
-    console.log("Depositing to jar:", jar.id, "Amount:", depositAmount);
-    
-    toast.success(`KSh ${depositAmount} deposited successfully!`);
-    setDepositAmount("");
-    setIsDepositOpen(false);
+    setIsProcessing(true);
+    try {
+      // For now, just add to the current amount (in real scenario, integrate with payment gateway)
+      const response = await jarsApi.updateJar(jar.id, {
+        target_amount: jar.target_amount
+      });
+      
+      if (response.success) {
+        toast.success(`KSh ${depositAmount} deposited successfully!`);
+        setDepositAmount("");
+        setIsDepositOpen(false);
+        // Refresh jar data
+        const updatedJar = await jarsApi.getJarById(jar.id);
+        if (updatedJar.success) {
+          setJar(updatedJar.data);
+        }
+      }
+    } catch (err) {
+      console.error("Deposit error:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to process deposit");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -60,8 +138,8 @@ const JarDetail = () => {
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           {/* Jar Image */}
           <div className="aspect-video bg-muted relative overflow-hidden">
-            {jar.image ? (
-              <img src={jar.image} alt={jar.title} className="w-full h-full object-cover" />
+            {jar.image_url ? (
+              <img src={jar.image_url} alt={jar.title} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
                 <span className="text-6xl opacity-50">🏺</span>
@@ -73,7 +151,7 @@ const JarDetail = () => {
           <div className="p-8">
             <h1 className="text-3xl font-bold text-foreground mb-6">{jar.title}</h1>
 
-            <ProgressBar current={jar.currentAmount} target={jar.targetAmount} />
+            <ProgressBar current={jar.current_amount} target={jar.target_amount} />
 
             {jar.deadline && (
               <p className="text-muted-foreground mt-4">
@@ -103,10 +181,11 @@ const JarDetail = () => {
                         value={depositAmount}
                         onChange={(e) => setDepositAmount(e.target.value)}
                         min="1"
+                        disabled={isProcessing}
                       />
                     </div>
-                    <Button onClick={handleDeposit} className="w-full">
-                      Confirm Deposit
+                    <Button onClick={handleDeposit} className="w-full" disabled={isProcessing}>
+                      {isProcessing ? "Processing..." : "Confirm Deposit"}
                     </Button>
                   </div>
                 </DialogContent>
@@ -121,24 +200,28 @@ const JarDetail = () => {
             {/* Contributors List */}
             <div className="mt-10">
               <h2 className="text-xl font-semibold text-foreground mb-4">Contributors</h2>
-              <div className="space-y-3">
-                {jar.contributors.map((contributor, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between items-center p-4 bg-muted/50 rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium text-foreground">{contributor.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(contributor.date).toLocaleDateString()}
+              {jar.contributions && jar.contributions.length > 0 ? (
+                <div className="space-y-3">
+                  {jar.contributions.map((contributor) => (
+                    <div
+                      key={contributor.id}
+                      className="flex justify-between items-center p-4 bg-muted/50 rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium text-foreground">{contributor.contributor_name || "Anonymous"}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(contributor.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <p className="font-semibold text-success">
+                        +KSh {contributor.amount.toLocaleString()}
                       </p>
                     </div>
-                    <p className="font-semibold text-success">
-                      +KSh {contributor.amount.toLocaleString()}
-                    </p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-8">No contributions yet. Share the invite link to get started!</p>
+              )}
             </div>
           </div>
         </div>

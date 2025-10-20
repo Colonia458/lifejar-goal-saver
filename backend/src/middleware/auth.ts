@@ -5,7 +5,7 @@ import { unauthorized, serverError } from '../utils/response';
 export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
-    email?: string;
+    email?: string | undefined;
     user_metadata?: any;
   };
 }
@@ -36,7 +36,7 @@ export const authenticateUser = async (
     // Attach user information to the request
     req.user = {
       id: user.id,
-      email: user.email,
+      email: user.email as string | undefined,
       user_metadata: user.user_metadata
     };
 
@@ -50,7 +50,7 @@ export const authenticateUser = async (
 // Optional authentication middleware (doesn't fail if no token)
 export const optionalAuth = async (
   req: AuthenticatedRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
@@ -67,7 +67,7 @@ export const optionalAuth = async (
     if (!error && user) {
       req.user = {
         id: user.id,
-        email: user.email,
+        email: user.email as string | undefined,
         user_metadata: user.user_metadata
       };
     }

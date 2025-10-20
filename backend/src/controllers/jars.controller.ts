@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { JarService } from '../services/jar.service';
 import { CreateJarRequest, UpdateJarRequest } from '../types/jar';
-import { success, error, serverError, notFound, badRequest } from '../utils/response';
+import { success, serverError, notFound, badRequest } from '../utils/response';
 import { AuthenticatedRequest } from '../middleware/auth';
 
 export class JarController {
@@ -54,6 +54,11 @@ export class JarController {
       const { id } = req.params;
       const userId = req.user!.id;
 
+      if (!id) {
+        badRequest(res, 'Jar ID is required');
+        return;
+      }
+
       const jar = await JarService.getJarById(id);
       
       if (!jar) {
@@ -83,6 +88,11 @@ export class JarController {
       const userId = req.user!.id;
       const updateData: UpdateJarRequest = req.body;
 
+      if (!id) {
+        badRequest(res, 'Jar ID is required');
+        return;
+      }
+
       if (updateData.target_amount && updateData.target_amount <= 0) {
         badRequest(res, 'Target amount must be greater than 0');
         return;
@@ -108,6 +118,11 @@ export class JarController {
       const { id } = req.params;
       const userId = req.user!.id;
 
+      if (!id) {
+        badRequest(res, 'Jar ID is required');
+        return;
+      }
+
       await JarService.deleteJar(id, userId);
       success(res, null, 'Jar deleted successfully');
     } catch (err) {
@@ -126,6 +141,12 @@ export class JarController {
   static async getPublicJar(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      
+      if (!id) {
+        badRequest(res, 'Jar ID is required');
+        return;
+      }
+
       const jar = await JarService.getPublicJar(id);
       
       if (!jar) {

@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "LifeJar Backend API",
-    "description": "Comprehensive Postman collection for testing all endpoints in the LifeJar Backend API",
+    "description": "Comprehensive Postman collection for testing all endpoints in the LifeJar Backend API with Frontend Integration",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -23,6 +23,16 @@
     {
       "key": "transaction_id",
       "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_email",
+      "value": "test123@gmail.com",
+      "type": "string"
+    },
+    {
+      "key": "user_password",
+      "value": "password123",
       "type": "string"
     }
   ],
@@ -65,7 +75,7 @@
       "name": "Authentication",
       "item": [
         {
-          "name": "Signup",
+          "name": "Signup (Frontend Compatible)",
           "request": {
             "method": "POST",
             "header": [
@@ -76,7 +86,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\"\n}"
+              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/auth/signup",
@@ -93,6 +103,11 @@
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('auth_token', response.data.access_token);",
                   "    console.log('Token set from signup:', response.data.access_token.substring(0, 20) + '...');",
+                  "}",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('auth_token', response.data.access_token);",
+                  "    console.log('Token set from signup (with session):', response.data.access_token.substring(0, 20) + '...');",
                   "}"
                 ]
               }
@@ -100,7 +115,7 @@
           ]
         },
         {
-          "name": "Login",
+          "name": "Login (Frontend Compatible)",
           "request": {
             "method": "POST",
             "header": [
@@ -111,7 +126,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"email\": \"{{user_email}}\",\n  \"password\": \"{{user_password}}\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/auth/login",
@@ -174,7 +189,7 @@
       "name": "Jars",
       "item": [
         {
-          "name": "Create Jar",
+          "name": "Create Jar (Frontend Compatible)",
           "request": {
             "method": "POST",
             "header": [
@@ -189,7 +204,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"My Goal Jar\",\n  \"description\": \"Saving for a new laptop\",\n  \"target_amount\": 1500,\n  \"currency\": \"USD\",\n  \"is_public\": true,\n  \"deadline\": \"2024-12-31\",\n  \"category\": \"Electronics\",\n  \"image_url\": \"https://example.com/image.jpg\"\n}"
+              "raw": "{\n  \"title\": \"Emergency Fund\",\n  \"description\": \"Building emergency savings\",\n  \"target_amount\": 50000,\n  \"currency\": \"KES\",\n  \"is_public\": true,\n  \"deadline\": \"2024-12-31\",\n  \"category\": \"Savings\",\n  \"image_url\": \"https://example.com/emergency-fund.jpg\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/jars",
@@ -205,6 +220,7 @@
                   "if (pm.response.code === 201) {",
                   "    const response = pm.response.json();",
                   "    pm.collectionVariables.set('jar_id', response.data.id);",
+                  "    console.log('Jar created with ID:', response.data.id);",
                   "}"
                 ]
               }
