@@ -1,0 +1,441 @@
+{
+  "info": {
+    "name": "LifeJar Backend API",
+    "description": "Comprehensive Postman collection for testing all endpoints in the LifeJar Backend API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "jar_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Root Endpoint",
+      "item": [
+        {
+          "name": "API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication Setup",
+      "item": [
+        {
+          "name": "Authentication Note",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// NOTE: Authentication is handled by Supabase",
+                  "// 1. Sign up/login through your frontend or Supabase dashboard",
+                  "// 2. Get the JWT access token from Supabase",
+                  "// 3. Set the 'auth_token' variable in Postman environment to the JWT token",
+                  "// 4. Use 'Bearer {{auth_token}}' in Authorization header for protected endpoints",
+                  "",
+                  "// Example token format:",
+                  "// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Jars",
+      "item": [
+        {
+          "name": "Create Jar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"My Goal Jar\",\n  \"description\": \"Saving for a new laptop\",\n  \"target_amount\": 1500,\n  \"currency\": \"USD\",\n  \"is_public\": true,\n  \"deadline\": \"2024-12-31\",\n  \"category\": \"Electronics\",\n  \"image_url\": \"https://example.com/image.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/jars",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jars"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jar_id', response.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Jars",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/jars",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jars"]
+            }
+          }
+        },
+        {
+          "name": "Get Jar by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/jars/{{jar_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jars", "{{jar_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Jar",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Goal Jar\",\n  \"description\": \"Saving for a gaming laptop\",\n  \"target_amount\": 2000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/jars/{{jar_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jars", "{{jar_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Jar",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/jars/{{jar_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jars", "{{jar_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Public Jar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/jars/public/{{jar_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jars", "public", "{{jar_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Initiate STK Push",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jar_id\": \"{{jar_id}}\",\n  \"amount\": 100,\n  \"contributor_name\": \"John Doe\",\n  \"phone_number\": \"254712345678\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/stk-push",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "stk-push"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('transaction_id', response.data.transaction_id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Initiate Pesapal Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jar_id\": \"{{jar_id}}\",\n  \"amount\": 100,\n  \"contributor_name\": \"John Doe\",\n  \"customer_email\": \"john@example.com\",\n  \"customer_first_name\": \"John\",\n  \"customer_last_name\": \"Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/pesapal",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "pesapal"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('transaction_id', response.data.transaction_id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Payment Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/payments/status/{{transaction_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "status", "{{transaction_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Payment Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/payments/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "health"]
+            }
+          }
+        },
+        {
+          "name": "Handle Webhook (PayHero)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "x-payhero-signature",
+                "value": "sample_signature"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaction_id\": \"{{transaction_id}}\",\n  \"status\": \"success\",\n  \"amount\": 100,\n  \"currency\": \"KES\",\n  \"reference\": \"REF123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/webhook",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "webhook"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error Scenarios",
+      "item": [
+        {
+          "name": "Create Jar - Missing Auth",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Jar\",\n  \"target_amount\": 100\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/jars",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jars"]
+            }
+          }
+        },
+        {
+          "name": "Create Jar - Invalid Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"\",\n  \"target_amount\": -100\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/jars",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jars"]
+            }
+          }
+        },
+        {
+          "name": "STK Push - Invalid Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jar_id\": \"\",\n  \"amount\": -50,\n  \"contributor_name\": \"\",\n  \"phone_number\": \"invalid\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/payments/stk-push",
+              "host": ["{{base_url}}"],
+              "path": ["api", "payments", "stk-push"]
+            }
+          }
+        },
+        {
+          "name": "Get Non-existent Jar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/jars/non-existent-id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "jars", "non-existent-id"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
